@@ -1,1 +1,1 @@
-# devsync-automation
+[![Daily Repository Update](https://github.com/23f2003233/devsync-automation/actions/workflows/daily-update.yml/badge.svg)](https://github.com/23f2003233/devsync-automation/actions/workflows/daily-update.yml)
