@@ -2,57 +2,33 @@ const { chromium } = require('playwright');
 
 const seeds = [75, 76, 77, 78, 79, 80, 81, 82, 83, 84];
 
-async function scrapeSum(browser, seed) {
-    const page = await browser.newPage();
-    const url = `https://sanand0.github.io/tdsdata/table_sum.html?seed=${seed}`;
-    
-    try {
-        await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
-        
-        // Wait for table to have actual content
-        await page.waitForFunction(() => {
-            const cells = document.querySelectorAll('table td');
-            return cells.length > 0;
-        }, { timeout: 30000 });
-        
-        // Extra wait for dynamic content
-        await page.waitForTimeout(3000);
-        
-        const numbers = await page.evaluate(() => {
-            const cells = document.querySelectorAll('table td, table th');
-            const nums = [];
-            cells.forEach(cell => {
-                const text = cell.innerText.trim().replace(/,/g, '');
-                const num = parseFloat(text);
-                if (!isNaN(num)) nums.push(num);
-            });
-            return nums;
-        });
-        
-        const sum = numbers.reduce((a, b) => a + b, 0);
-        console.log(`Seed ${seed}: sum = ${sum} (${numbers.length} numbers)`);
-        await page.close();
-        return sum;
-    } catch (e) {
-        console.log(`Seed ${seed}: ERROR - ${e.message}`);
-        await page.close();
-        return 0;
-    }
-}
-
 (async () => {
     const browser = await chromium.launch({ headless: true });
+    const page = await browser.newPage();
     
-    let totalSum = 0;
+    // Test with just seed 75 first
+    const url = `https://sanand0.github.io/tdsdata/table_sum.html?seed=75`;
+    console.log(`Visiting: ${url}`);
     
-    for (const seed of seeds) {
-        const sum = await scrapeSum(browser, seed);
-        totalSum += sum;
-    }
+    await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
+    await page.waitForTimeout(5000);
+    
+    // Get full page HTML to debug
+    const html = await page.content();
+    console.log(`Page HTML (first 2000 chars):`);
+    console.log(html.substring(0, 2000));
+    
+    // Count tables
+    const tableCount = await page.evaluate(() => document.querySelectorAll('table').length);
+    console.log(`Number of tables found: ${tableCount}`);
+    
+    // Count all cells
+    const cellCount = await page.evaluate(() => document.querySelectorAll('td').length);
+    console.log(`Number of td cells: ${cellCount}`);
+    
+    // Get all text content
+    const allText = await page.evaluate(() => document.body.innerText);
+    console.log(`Page text: ${allText.substring(0, 1000)}`);
     
     await browser.close();
-    
-    console.log(`\n==================================================`);
-    console.log(`TOTAL SUM = ${totalSum}`);
-    console.log(`==================================================`);
 })();
