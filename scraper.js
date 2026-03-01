@@ -1,40 +1,41 @@
-name: Playwright Table Scraper
+const { chromium } = require('playwright');
 
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: '0 3 * * *'
+const seeds = [75, 76, 77, 78, 79, 80, 81, 82, 83, 84];
 
-jobs:
-  scrape:
-    runs-on: ubuntu-latest
-    
-    permissions:
-      contents: write
+async function scrapeSum(browser, seed) {
+  var page = await browser.newPage();
+  var url = 'https://sanand0.github.io/tdsdata/js_table/?seed=' + seed;
+  try {
+    await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
+    await page.waitForTimeout(3000);
+    var numbers = await page.evaluate(function() {
+      var cells = document.querySelectorAll('table td, table th');
+      var nums = [];
+      cells.forEach(function(cell) {
+        var text = cell.innerText.trim().replace(/,/g, '');
+        var num = parseFloat(text);
+        if (!isNaN(num)) nums.push(num);
+      });
+      return nums;
+    });
+    var sum = numbers.reduce(function(a, b) { return a + b; }, 0);
+    await page.close();
+    return sum;
+  } catch(e) {
+    await page.close();
+    return 0;
+  }
+}
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+async function main() {
+  var browser = await chromium.launch({ headless: true });
+  var totalSum = 0;
+  for (var i = 0; i < seeds.length; i++) {
+    var sum = await scrapeSum(browser, seeds[i]);
+    totalSum += sum;
+  }
+  await browser.close();
+  console.log('TOTAL SUM = ' + totalSum);
+}
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-
-      - name: Install dependencies for 23f2003233@ds.study.iitm.ac.in
-        run: |
-          npm init -y
-          npm install playwright
-          npx playwright install chromium --with-deps
-
-      - name: Run Scraper
-        run: node scraper.js | tee scraper_output.txt
-
-      - name: Commit results
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          echo "Scraper run: $(date)" >> scraper_log.txt
-          git add scraper_log.txt scraper_output.txt
-          git commit -m "Scraper results $(date '+%Y-%m-%d %H:%M:%S')"
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+main();
