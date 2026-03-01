@@ -22,7 +22,7 @@ async function scrapeSum(browser, seed) {
         });
         
         const sum = numbers.reduce((a, b) => a + b, 0);
-        console.log(`Seed ${seed}: sum = ${sum} (${numbers.length} numbers)`);
+        console.log(`Seed ${seed}: ${sum}`);
         await page.close();
         return sum;
     } catch (e) {
@@ -34,7 +34,6 @@ async function scrapeSum(browser, seed) {
 
 (async () => {
     const browser = await chromium.launch({ headless: true });
-    
     let totalSum = 0;
     
     for (const seed of seeds) {
@@ -44,7 +43,5 @@ async function scrapeSum(browser, seed) {
     
     await browser.close();
     
-    console.log(`\n==================================================`);
-    console.log(`TOTAL SUM = ${totalSum}`);
-    console.log(`==================================================`);
+    console.log(`Total: ${totalSum}`);
 })();
