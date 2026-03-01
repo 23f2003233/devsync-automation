@@ -3,56 +3,40 @@ const { chromium } = require('playwright');
 const seeds = [75, 76, 77, 78, 79, 80, 81, 82, 83, 84];
 
 async function scrapeSum(browser, seed) {
-    const page = await browser.newPage();
-    const url = `https://sanand0.github.io/tdsdata/js_table/?seed=${seed}`;
-    
-    try {
-        await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
-        await page.waitForTimeout(3000);
-        
-        const numbers = await page.evaluate(() => {
-            const cells = document.querySelectorAll('table td, table th');
-            const nums = [];
-            cells.forEach(cell => {
-                const text = cell.innerText.trim().replace(/,/g, '');
-                const num = parseFloat(text);
-                if (!isNaN(num)) nums.push(num);
-            });
-            return nums;
-        });
-        
-        const sum = numbers.reduce((a, b) => a + b, 0);
-        await page.close();
-        return sum;
-    } catch (e) {
-        await page.close();
-        return 0;
-    }
+  const page = await browser.newPage();
+  const url = 'https://sanand0.github.io/tdsdata/js_table/?seed=' + seed;
+  try {
+    await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
+    await page.waitForTimeout(3000);
+    const numbers = await page.evaluate(function() {
+      var cells = document.querySelectorAll('table td, table th');
+      var nums = [];
+      cells.forEach(function(cell) {
+        var text = cell.innerText.trim().replace(/,/g, '');
+        var num = parseFloat(text);
+        if (!isNaN(num)) nums.push(num);
+      });
+      return nums;
+    });
+    var sum = numbers.reduce(function(a, b) { return a + b; }, 0);
+    await page.close();
+    return sum;
+  } catch(e) {
+    await page.close();
+    return 0;
+  }
 }
 
-(async () => {
-    const browser = await chromium.launch({ headless: true });
-    let totalSum = 0;
-    
-    for (const seed of seeds) {
-        const sum = await scrapeSum(browser, seed);
-        totalSum += sum;
-    }
-    
-    await browser.close();
-    
-    // Print in multiple formats so grader can find it
-    console.log(totalSum);
-    console.log(`${totalSum}`);
-    console.log(`Total: ${totalSum}`);
-    console.log(`TOTAL SUM = ${totalSum}`);
-    console.log(`Answer: ${totalSum}`);
-})();
-```
+async function main() {
+  var browser = await chromium.launch({ headless: true });
+  var totalSum = 0;
+  for (var i = 0; i < seeds.length; i++) {
+    var sum = await scrapeSum(browser, seeds[i]);
+    totalSum += sum;
+  }
+  await browser.close();
+  console.log(totalSum);
+  console.log('TOTAL SUM = ' + totalSum);
+}
 
-Commit, then trigger workflow again:
-1. **Actions** → **Playwright Table Scraper** → **Run workflow**
-2. Wait ~5 minutes
-3. Submit again with your token
-```
-https://github.com/23f2003233/devsync-automation ghp_YOUR_TOKEN
+main();
