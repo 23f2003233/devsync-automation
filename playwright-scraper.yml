@@ -18,11 +18,13 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install Playwright for 23f2003233@ds.study.iitm.ac.in
+      - name: Install dependencies for 23f2003233@ds.study.iitm.ac.in
         run: |
           npm init -y
           npm install playwright
           npx playwright install chromium --with-deps
 
       - name: Run Scraper
-        run: node scraper.js
+        run: |
+          node scraper.js | tee output.txt
+          echo "Answer: $(grep 'Total:' output.txt)"
